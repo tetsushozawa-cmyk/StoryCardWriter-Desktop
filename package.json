@@ -1,0 +1,46 @@
+{
+  "name": "story-card-writer-desktop",
+  "productName": "StoryCardWriter Desktop",
+  "version": "0.1.0",
+  "description": "Android版StoryCardWriterのJSONを編集するデスクトップアプリ",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test",
+    "build:mac": "electron-builder --mac dir --x64"
+  },
+  "devDependencies": {
+    "electron": "37.2.6",
+    "electron-builder": "24.13.3"
+  },
+  "build": {
+    "appId": "com.shozawatetsu.storycardwriterdesktop",
+    "productName": "StoryCardWriter Desktop",
+    "asar": true,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "style.css",
+      "renderer.js",
+      "document-codec.js",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "identity": null,
+      "target": [
+        {
+          "target": "dir",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    }
+  }
+}
