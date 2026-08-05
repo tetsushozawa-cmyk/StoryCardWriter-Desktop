@@ -248,6 +248,7 @@ async function saveAs() {
 }
 
 async function save() {
+  if (!dirty) return true;
   if (!currentFilePath) return saveAs();
   try {
     const result = await window.desktopFiles.save(currentFilePath, codec.serialize(story));
@@ -290,6 +291,37 @@ function newDocument() {
   elements.titleInput.focus();
   showToast('新しい作品を作成しました');
 }
+
+function findCard() {
+  const query = window.prompt('検索する文字列を入力してください（タイトル・本文）');
+  if (query === null) return;
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  if (!normalizedQuery) return;
+
+  const card = story.cards.find((item) => (
+    displayLabel(item).toLocaleLowerCase().includes(normalizedQuery)
+    || item.body.toLocaleLowerCase().includes(normalizedQuery)
+  ));
+  if (!card) {
+    showToast(`「${query.trim()}」は見つかりませんでした`);
+    return;
+  }
+
+  const row = elements.cardList.querySelector(`[data-card-id="${CSS.escape(card.id)}"]`);
+  row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  row?.querySelector('.story-card')?.focus({ preventScroll: true });
+  showToast(`「${query.trim()}」に一致するカードへ移動しました`);
+}
+
+const commandHandlers = {
+  new: newDocument,
+  open: openFile,
+  save,
+  'save-as': saveAs,
+  find: findCard,
+};
+
+window.desktopFiles?.onCommand((command) => commandHandlers[command]?.());
 
 elements.newButton.addEventListener('click', newDocument);
 elements.openButton.addEventListener('click', openFile);

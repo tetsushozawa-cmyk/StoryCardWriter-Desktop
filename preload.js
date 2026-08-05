@@ -5,4 +5,8 @@ contextBridge.exposeInMainWorld('desktopFiles', Object.freeze({
   save: (filePath, content) => ipcRenderer.invoke('file:save', { filePath, content }),
   saveAs: (content, suggestedName) => ipcRenderer.invoke('file:save-as', { content, suggestedName }),
   setDirty: (dirty) => ipcRenderer.send('app:dirty-state', Boolean(dirty)),
+  onCommand: (handler) => {
+    if (typeof handler !== 'function') return;
+    ipcRenderer.on('app:command', (_event, command) => handler(command));
+  },
 }));

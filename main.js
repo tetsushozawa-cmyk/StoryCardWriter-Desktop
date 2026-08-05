@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, Menu } = require('electron');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 
@@ -6,6 +6,65 @@ const authorizedPaths = new Set();
 let mainWindow = null;
 let rendererIsDirty = false;
 let allowWindowClose = false;
+
+function sendCommand(command) {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  mainWindow.webContents.send('app:command', command);
+}
+
+function createApplicationMenu() {
+  const isMac = process.platform === 'darwin';
+  const template = [
+    ...(isMac ? [{
+      label: app.name,
+      submenu: [
+        { role: 'about' },
+        { type: 'separator' },
+        { role: 'services' },
+        { type: 'separator' },
+        { role: 'hide' },
+        { role: 'hideOthers' },
+        { role: 'unhide' },
+        { type: 'separator' },
+        { role: 'quit' },
+      ],
+    }] : []),
+    {
+      label: 'ファイル',
+      submenu: [
+        { label: '新規作成', accelerator: 'CmdOrCtrl+N', click: () => sendCommand('new') },
+        { label: '開く…', accelerator: 'CmdOrCtrl+O', click: () => sendCommand('open') },
+        { type: 'separator' },
+        { label: '保存', accelerator: 'CmdOrCtrl+S', click: () => sendCommand('save') },
+        { label: '名前を付けて保存…', accelerator: 'CmdOrCtrl+Shift+S', click: () => sendCommand('save-as') },
+        ...(!isMac ? [{ type: 'separator' }, { role: 'quit' }] : []),
+      ],
+    },
+    {
+      label: '編集',
+      submenu: [
+        { role: 'undo' },
+        { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        { role: 'selectAll' },
+        { type: 'separator' },
+        { label: '検索…', accelerator: 'CmdOrCtrl+F', click: () => sendCommand('find') },
+      ],
+    },
+    {
+      label: 'ウインドウ',
+      submenu: [
+        { role: 'minimize' },
+        { role: 'zoom' },
+        ...(isMac ? [{ type: 'separator' }, { role: 'front' }] : [{ role: 'close' }]),
+      ],
+    },
+  ];
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -113,6 +172,7 @@ ipcMain.on('app:dirty-state', (_event, dirty) => {
 });
 
 app.whenReady().then(() => {
+  createApplicationMenu();
   createWindow();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
