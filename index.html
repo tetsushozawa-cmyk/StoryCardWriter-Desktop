@@ -14,6 +14,7 @@
       <button id="open-button" type="button">開く</button>
       <button id="save-button" type="button">保存</button>
       <button id="save-as-button" type="button">名前を付けて保存</button>
+      <button id="open-reference-button" type="button">参照を開く</button>
       <span class="share-space" aria-label="共有ボタン用の場所">
         <button type="button" disabled title="今回は未実装です">共有</button>
       </span>
@@ -24,23 +25,24 @@
     </div>
   </header>
 
-  <main>
-    <section class="settings-panel" aria-labelledby="settings-heading">
+  <main id="workspace" class="workspace">
+    <div class="editing-pane">
+      <section class="settings-panel" aria-labelledby="settings-heading">
       <h2 id="settings-heading">作品・人物名</h2>
       <div class="settings-fields">
         <label>作品名<input id="title-input" type="text" autocomplete="off"></label>
         <label>主人公名<input id="protagonist-input" type="text" autocomplete="off" placeholder="主人公"></label>
         <label>相手役名<input id="partner-input" type="text" autocomplete="off" placeholder="相手役"></label>
       </div>
-    </section>
+      </section>
 
-    <section class="cards-section" aria-labelledby="cards-heading">
+      <section class="cards-section" aria-labelledby="cards-heading">
       <h2 id="cards-heading">カード</h2>
       <p id="empty-message" class="empty-message">下の入力欄から、思いついた瞬間を1枚のカードとして残せます。</p>
       <div id="card-list" class="card-list" aria-live="polite"></div>
-    </section>
+      </section>
 
-    <section id="editor-panel" class="editor-panel" aria-labelledby="editor-heading">
+      <section id="editor-panel" class="editor-panel" aria-labelledby="editor-heading">
       <div class="editor-heading-row">
         <div>
           <h2 id="editor-heading">カード追加</h2>
@@ -53,15 +55,30 @@
         <div id="type-buttons" class="type-buttons"></div>
       </fieldset>
       <label class="body-label" for="card-body">文章</label>
-      <textarea id="card-body" rows="4" placeholder="主人公を入力"></textarea>
+      <textarea id="card-body" rows="4" placeholder="主題を入力"></textarea>
       <div class="editor-actions">
         <button id="submit-card-button" class="primary" type="button">追加</button>
       </div>
-    </section>
+      </section>
+    </div>
+
+    <aside id="reference-pane" class="reference-pane hidden" aria-labelledby="reference-heading">
+      <div class="reference-header">
+        <div>
+          <h2 id="reference-heading">参照</h2>
+          <p id="reference-file-name"></p>
+        </div>
+        <button id="close-reference-button" class="secondary" type="button">参照を閉じる</button>
+      </div>
+      <h3 id="reference-title"></h3>
+      <p id="reference-empty" class="empty-message hidden">カードがありません。</p>
+      <div id="reference-card-list" class="card-list reference-card-list"></div>
+    </aside>
   </main>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="document-codec.js"></script>
+  <script src="inline-markdown.js"></script>
   <script src="renderer.js"></script>
 </body>
 </html>

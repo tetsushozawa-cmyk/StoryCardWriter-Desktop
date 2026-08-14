@@ -34,6 +34,7 @@ function createApplicationMenu() {
       submenu: [
         { label: '新規作成', accelerator: 'CmdOrCtrl+N', click: () => sendCommand('new') },
         { label: '開く…', accelerator: 'CmdOrCtrl+O', click: () => sendCommand('open') },
+        { label: '参照を開く…', accelerator: 'CmdOrCtrl+Alt+O', click: () => sendCommand('open-reference') },
         { type: 'separator' },
         { label: '保存', accelerator: 'CmdOrCtrl+S', click: () => sendCommand('save') },
         { label: '名前を付けて保存…', accelerator: 'CmdOrCtrl+Shift+S', click: () => sendCommand('save-as') },
@@ -105,8 +106,8 @@ function createWindow() {
   });
 }
 
-function ensureJsonExtension(filePath) {
-  return filePath.toLowerCase().endsWith('.json') ? filePath : `${filePath}.json`;
+function ensureScwExtension(filePath) {
+  return filePath.toLowerCase().endsWith('.scw') ? filePath : `${filePath}.scw`;
 }
 
 function validateJsonText(jsonText) {
@@ -127,10 +128,10 @@ async function writeJsonAtomically(filePath, content) {
 
 ipcMain.handle('file:open', async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
-    title: 'StoryCardWriterのJSONを開く',
+    title: 'StoryCardWriterファイルを開く',
     properties: ['openFile'],
     filters: [
-      { name: 'JSONファイル', extensions: ['json'] },
+      { name: 'StoryCardWriterファイル', extensions: ['scw', 'json'] },
       { name: 'すべてのファイル', extensions: ['*'] },
     ],
   });
@@ -140,6 +141,22 @@ ipcMain.handle('file:open', async () => {
   const content = await fs.readFile(filePath, 'utf8');
   authorizedPaths.add(filePath);
   return { canceled: false, filePath, fileName: path.basename(filePath), content };
+});
+
+ipcMain.handle('file:open-reference', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: '参照するStoryCardWriterファイルを開く',
+    properties: ['openFile'],
+    filters: [
+      { name: 'StoryCardWriterファイル', extensions: ['scw', 'json'] },
+      { name: 'すべてのファイル', extensions: ['*'] },
+    ],
+  });
+  if (result.canceled || result.filePaths.length === 0) return { canceled: true };
+
+  const filePath = path.resolve(result.filePaths[0]);
+  const content = await fs.readFile(filePath, 'utf8');
+  return { canceled: false, fileName: path.basename(filePath), content };
 });
 
 ipcMain.handle('file:save', async (_event, payload) => {
@@ -152,16 +169,16 @@ ipcMain.handle('file:save', async (_event, payload) => {
 
 ipcMain.handle('file:save-as', async (_event, payload) => {
   validateJsonText(payload?.content);
-  const defaultName = String(payload?.suggestedName || 'untitled.json')
+  const defaultName = String(payload?.suggestedName || 'untitled.scw')
     .replace(/[\\/:*?"<>|]/g, '_');
   const result = await dialog.showSaveDialog(mainWindow, {
     title: '名前を付けて保存',
     defaultPath: defaultName,
-    filters: [{ name: 'JSONファイル', extensions: ['json'] }],
+    filters: [{ name: 'SCWファイル', extensions: ['scw'] }],
   });
   if (result.canceled || !result.filePath) return { canceled: true };
 
-  const filePath = path.resolve(ensureJsonExtension(result.filePath));
+  const filePath = path.resolve(ensureScwExtension(result.filePath));
   await writeJsonAtomically(filePath, payload.content);
   authorizedPaths.add(filePath);
   return { canceled: false, filePath, fileName: path.basename(filePath) };

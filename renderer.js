@@ -1,10 +1,12 @@
 const codec = window.StoryDocumentCodec;
+const inlineMarkdown = window.InlineMarkdown;
 
 const elements = {
   newButton: document.querySelector('#new-button'),
   openButton: document.querySelector('#open-button'),
   saveButton: document.querySelector('#save-button'),
   saveAsButton: document.querySelector('#save-as-button'),
+  openReferenceButton: document.querySelector('#open-reference-button'),
   workHeading: document.querySelector('#work-heading'),
   fileStatus: document.querySelector('#file-status'),
   titleInput: document.querySelector('#title-input'),
@@ -19,6 +21,12 @@ const elements = {
   cardBody: document.querySelector('#card-body'),
   submitCardButton: document.querySelector('#submit-card-button'),
   editorPanel: document.querySelector('#editor-panel'),
+  referencePane: document.querySelector('#reference-pane'),
+  referenceFileName: document.querySelector('#reference-file-name'),
+  referenceTitle: document.querySelector('#reference-title'),
+  referenceEmpty: document.querySelector('#reference-empty'),
+  referenceCardList: document.querySelector('#reference-card-list'),
+  closeReferenceButton: document.querySelector('#close-reference-button'),
   toast: document.querySelector('#toast'),
 };
 
@@ -54,8 +62,6 @@ function confirmDiscardChanges() {
 }
 
 function displayLabel(card) {
-  if (card.type === 'protagonist') return story.settings.protagonistName || '主人公';
-  if (card.type === 'partner') return story.settings.partnerName || '相手役';
   return codec.typeById(card.type).ui;
 }
 
@@ -97,11 +103,55 @@ function renderCards() {
 
     const body = document.createElement('p');
     body.className = 'card-body';
-    body.textContent = card.body;
+    inlineMarkdown.render(body, card.body);
     article.append(top, body);
     row.append(article);
     elements.cardList.append(row);
   });
+}
+
+function renderReference(reference, fileName) {
+  elements.referenceFileName.textContent = fileName;
+  elements.referenceTitle.textContent = reference.settings.title || '無題の作品';
+  elements.referenceCardList.replaceChildren();
+  elements.referenceEmpty.classList.toggle('hidden', reference.cards.length > 0);
+
+  reference.cards.forEach((card) => {
+    const type = codec.typeById(card.type);
+    const article = document.createElement('article');
+    article.className = `story-card reference-card type-${card.type}`;
+
+    const label = document.createElement('div');
+    label.className = 'card-label';
+    label.textContent = type.ui;
+
+    const body = document.createElement('p');
+    body.className = 'card-body';
+    inlineMarkdown.render(body, card.body);
+    article.append(label, body);
+    elements.referenceCardList.append(article);
+  });
+
+  elements.referencePane.classList.remove('hidden');
+  document.body.classList.add('reference-open');
+}
+
+async function openReference() {
+  try {
+    const result = await window.desktopFiles.openReference();
+    if (result.canceled) return;
+    renderReference(codec.parse(result.content), result.fileName);
+    showToast(`参照を開きました：${result.fileName}`);
+  } catch (error) {
+    showToast(`参照を開けませんでした：${error.message}`);
+  }
+}
+
+function closeReference() {
+  elements.referencePane.classList.add('hidden');
+  elements.referenceCardList.replaceChildren();
+  document.body.classList.remove('reference-open');
+  showToast('参照を閉じました');
 }
 
 function renderSettings() {
@@ -229,7 +279,7 @@ function syncSetting(key, value) {
 
 function suggestedFileName() {
   const safeTitle = (story.settings.title || 'untitled').replace(/[\\/:*?"<>|]/g, '_');
-  return `${safeTitle}.json`;
+  return `${safeTitle}.scw`;
 }
 
 async function saveAs() {
@@ -318,6 +368,7 @@ const commandHandlers = {
   open: openFile,
   save,
   'save-as': saveAs,
+  'open-reference': openReference,
   find: findCard,
 };
 
@@ -327,6 +378,8 @@ elements.newButton.addEventListener('click', newDocument);
 elements.openButton.addEventListener('click', openFile);
 elements.saveButton.addEventListener('click', save);
 elements.saveAsButton.addEventListener('click', saveAs);
+elements.openReferenceButton.addEventListener('click', openReference);
+elements.closeReferenceButton.addEventListener('click', closeReference);
 elements.submitCardButton.addEventListener('click', submitCard);
 elements.cancelEditButton.addEventListener('click', resetEditor);
 elements.titleInput.addEventListener('input', (event) => syncSetting('title', event.target.value));

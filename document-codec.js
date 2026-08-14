@@ -1,11 +1,11 @@
 (function attachCodec(globalObject) {
   const TYPES = [
-    { id: 'protagonist', ui: '主人公', json: '主人公', english: 'Protagonist', color: 'blue', align: 'left' },
-    { id: 'partner', ui: '相手役', json: '相手', english: 'Partner', color: 'green', align: 'right' },
-    { id: 'narration', ui: 'ナレーション', json: 'ナレーション', english: 'Narration', color: 'gray', align: 'center' },
-    { id: 'action', ui: 'アクション', json: 'アクション', english: 'Action', color: 'orange', align: 'center' },
-    { id: 'inner', ui: '心の声', json: '心情', english: 'Emotion', color: 'green', align: 'center' },
-    { id: 'sound', ui: '効果音', json: '効果音', english: 'SoundEffect', color: 'orange', align: 'center' },
+    { id: 'protagonist', ui: '主題', json: '主人公', english: 'Protagonist', color: 'blue', align: 'left' },
+    { id: 'partner', ui: 'アイデア', json: '相手', english: 'Partner', color: 'green', align: 'right' },
+    { id: 'narration', ui: '対案', json: 'ナレーション', english: 'Narration', color: 'gray', align: 'center' },
+    { id: 'action', ui: '参考', json: 'アクション', english: 'Action', color: 'orange', align: 'center' },
+    { id: 'inner', ui: '意見', json: '心情', english: 'Emotion', color: 'green', align: 'center' },
+    { id: 'sound', ui: '決定', json: '効果音', english: 'SoundEffect', color: 'orange', align: 'center' },
   ];
 
   const TYPE_ALIASES = new Map([

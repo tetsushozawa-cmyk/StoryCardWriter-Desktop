@@ -2,6 +2,30 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const codec = require('../document-codec.js');
 
+test('カード種類の表示名・順序・色を新しい6種類へ引き継ぐ', () => {
+  assert.deepEqual(
+    codec.TYPES.map(({ ui, color }) => ({ ui, color })),
+    [
+      { ui: '主題', color: 'blue' },
+      { ui: 'アイデア', color: 'green' },
+      { ui: '対案', color: 'gray' },
+      { ui: '参考', color: 'orange' },
+      { ui: '意見', color: 'green' },
+      { ui: '決定', color: 'orange' },
+    ],
+  );
+});
+
+test('Markdown記号を本文のプレーンテキストとして保存・読み込みする', () => {
+  const document = codec.newDocument();
+  const original = '*半角斜体* と **半角太字**、＊全角斜体＊ と ＊＊全角太字＊＊';
+  document.cards.push(codec.createCard('protagonist', original));
+
+  const serialized = codec.serialize(document);
+  assert.equal(JSON.parse(serialized).cards[0].text, original);
+  assert.equal(codec.parse(serialized).cards[0].body, original);
+});
+
 test('Android版JSONをorder順で読み込み、6種類へ変換する', () => {
   const document = codec.parse(JSON.stringify({
     title: '雨の日',

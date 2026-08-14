@@ -28,6 +28,7 @@
       "style.css",
       "renderer.js",
       "document-codec.js",
+      "inline-markdown.js",
       "package.json"
     ],
     "mac": {
