@@ -38,6 +38,8 @@ function createApplicationMenu() {
         { type: 'separator' },
         { label: '保存', accelerator: 'CmdOrCtrl+S', click: () => sendCommand('save') },
         { label: '名前を付けて保存…', accelerator: 'CmdOrCtrl+Shift+S', click: () => sendCommand('save-as') },
+        { type: 'separator' },
+        { label: '印刷…', accelerator: 'CmdOrCtrl+P', click: () => sendCommand('print') },
         ...(!isMac ? [{ type: 'separator' }, { role: 'quit' }] : []),
       ],
     },
@@ -158,6 +160,17 @@ ipcMain.handle('file:open-reference', async () => {
   const content = await fs.readFile(filePath, 'utf8');
   return { canceled: false, fileName: path.basename(filePath), content };
 });
+
+ipcMain.handle('app:print', async () => new Promise((resolve) => {
+  mainWindow.webContents.print({
+    silent: false,
+    printBackground: false,
+    pageSize: 'A4',
+    landscape: false,
+  }, (success, failureReason) => {
+    resolve({ success, failureReason: success ? '' : failureReason });
+  });
+}));
 
 ipcMain.handle('file:save', async (_event, payload) => {
   const filePath = path.resolve(String(payload?.filePath || ''));

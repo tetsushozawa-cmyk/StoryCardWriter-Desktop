@@ -6,6 +6,7 @@ const elements = {
   openButton: document.querySelector('#open-button'),
   saveButton: document.querySelector('#save-button'),
   saveAsButton: document.querySelector('#save-as-button'),
+  printButton: document.querySelector('#print-button'),
   openReferenceButton: document.querySelector('#open-reference-button'),
   workHeading: document.querySelector('#work-heading'),
   fileStatus: document.querySelector('#file-status'),
@@ -27,6 +28,7 @@ const elements = {
   referenceEmpty: document.querySelector('#reference-empty'),
   referenceCardList: document.querySelector('#reference-card-list'),
   closeReferenceButton: document.querySelector('#close-reference-button'),
+  printDocument: document.querySelector('#print-document'),
   toast: document.querySelector('#toast'),
 };
 
@@ -152,6 +154,52 @@ function closeReference() {
   elements.referenceCardList.replaceChildren();
   document.body.classList.remove('reference-open');
   showToast('参照を閉じました');
+}
+
+function renderPrintDocument() {
+  const header = document.createElement('header');
+  header.className = 'print-header';
+
+  const title = document.createElement('h1');
+  title.textContent = story.settings.title || '無題の作品';
+  header.append(title);
+
+  if (currentFileName) {
+    const fileName = document.createElement('p');
+    fileName.className = 'print-file-name';
+    fileName.textContent = currentFileName;
+    header.append(fileName);
+  }
+
+  const cards = story.cards.map((card) => {
+    const article = document.createElement('article');
+    article.className = 'print-card';
+
+    const heading = document.createElement('h2');
+    heading.className = 'print-card-type';
+    heading.textContent = displayLabel(card);
+
+    const body = document.createElement('p');
+    body.className = 'print-card-body';
+    inlineMarkdown.render(body, card.body);
+    article.append(heading, body);
+    return article;
+  });
+
+  elements.printDocument.replaceChildren(header, ...cards);
+}
+
+async function printDocument() {
+  try {
+    renderPrintDocument();
+    await new Promise((resolve) => requestAnimationFrame(() => resolve()));
+    const result = await window.desktopFiles.print();
+    if (!result.success && result.failureReason && !/cancel/i.test(result.failureReason)) {
+      showToast(`印刷できませんでした：${result.failureReason}`);
+    }
+  } catch (error) {
+    showToast(`印刷できませんでした：${error.message}`);
+  }
 }
 
 function renderSettings() {
@@ -368,6 +416,7 @@ const commandHandlers = {
   open: openFile,
   save,
   'save-as': saveAs,
+  print: printDocument,
   'open-reference': openReference,
   find: findCard,
 };
@@ -378,6 +427,7 @@ elements.newButton.addEventListener('click', newDocument);
 elements.openButton.addEventListener('click', openFile);
 elements.saveButton.addEventListener('click', save);
 elements.saveAsButton.addEventListener('click', saveAs);
+elements.printButton.addEventListener('click', printDocument);
 elements.openReferenceButton.addEventListener('click', openReference);
 elements.closeReferenceButton.addEventListener('click', closeReference);
 elements.submitCardButton.addEventListener('click', submitCard);
