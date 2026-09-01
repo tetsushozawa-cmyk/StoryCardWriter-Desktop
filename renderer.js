@@ -1,5 +1,6 @@
 const codec = window.StoryDocumentCodec;
 const inlineMarkdown = window.InlineMarkdown;
+const cardEditor = window.StoryCardEditor;
 
 const elements = {
   newButton: document.querySelector('#new-button'),
@@ -288,34 +289,28 @@ function deleteCard(cardId) {
   showToast('カードを削除しました');
 }
 
+function commitEditorInput() {
+  const result = cardEditor.commit(story, {
+    selectedType,
+    editingCardId,
+    insertingAfterCardId,
+  }, elements.cardBody.value, codec.createCard);
+  if (!result.committed) return result;
+
+  setDirty(true);
+  resetEditor();
+  renderCards();
+  return result;
+}
+
 function submitCard() {
-  const body = elements.cardBody.value.trim();
-  if (!body) {
+  const result = commitEditorInput();
+  if (!result.committed) {
     showToast('文章を入力してください');
     elements.cardBody.focus();
     return;
   }
-
-  if (editingCardId) {
-    const card = story.cards.find((item) => item.id === editingCardId);
-    if (card) {
-      card.type = selectedType;
-      card.body = body;
-    }
-    showToast('カードを更新しました');
-  } else {
-    const card = codec.createCard(selectedType, body);
-    if (insertingAfterCardId) {
-      const index = story.cards.findIndex((item) => item.id === insertingAfterCardId);
-      story.cards.splice(index >= 0 ? index + 1 : story.cards.length, 0, card);
-    } else {
-      story.cards.push(card);
-    }
-    showToast('カードを追加しました');
-  }
-  setDirty(true);
-  resetEditor();
-  renderCards();
+  showToast(result.action === 'updated' ? 'カードを更新しました' : 'カードを追加しました');
 }
 
 function syncSetting(key, value) {
@@ -332,6 +327,7 @@ function suggestedFileName() {
 
 async function saveAs() {
   try {
+    commitEditorInput();
     const result = await window.desktopFiles.saveAs(codec.serialize(story), suggestedFileName());
     if (result.canceled) return false;
     currentFilePath = result.filePath;
@@ -346,6 +342,7 @@ async function saveAs() {
 }
 
 async function save() {
+  commitEditorInput();
   if (!dirty) return true;
   if (!currentFilePath) return saveAs();
   try {
