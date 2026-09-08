@@ -60,3 +60,47 @@ test('「後に追加」中の入力は指定カードの直後へ追加する',
 
   assert.deepEqual(story.cards.map((card) => card.body), ['最初', '途中', '最後']);
 });
+
+test('新規入力中に過去カードの編集を始めても入力が通常カードとして残る', () => {
+  const story = codec.newDocument();
+  const existing = codec.createCard('action', '過去のカード');
+  story.cards.push(existing);
+
+  const result = cardEditor.commitPendingCard(
+    story,
+    'inner',
+    '入力中の新規カード',
+    codec.createCard,
+  );
+
+  assert.deepEqual(result, { committed: true, action: 'added' });
+  assert.deepEqual(story.cards.map((card) => card.body), [
+    '過去のカード',
+    '入力中の新規カード',
+  ]);
+  assert.equal(story.cards[1].type, 'inner');
+});
+
+test('新規入力を確定後に編集モードへ入っても同じ内容を二重登録しない', () => {
+  const story = codec.newDocument();
+  const existing = codec.createCard('action', '過去のカード');
+  story.cards.push(existing);
+
+  cardEditor.commitPendingCard(story, 'inner', '入力中の新規カード', codec.createCard);
+  commit(story, existing.body, { editingCardId: existing.id });
+
+  assert.deepEqual(story.cards.map((card) => card.body), [
+    '過去のカード',
+    '入力中の新規カード',
+  ]);
+});
+
+test('空白入力中に過去カードの編集を始めてもカードは増えない', () => {
+  const story = codec.newDocument();
+  story.cards.push(codec.createCard('action', '過去のカード'));
+
+  const result = cardEditor.commitPendingCard(story, 'inner', ' \n\t ', codec.createCard);
+
+  assert.deepEqual(result, { committed: false, action: 'empty' });
+  assert.equal(story.cards.length, 1);
+});
