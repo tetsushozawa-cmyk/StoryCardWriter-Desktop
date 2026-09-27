@@ -34,6 +34,14 @@
       "inline-markdown.js",
       "package.json"
     ],
+    "fileAssociations": [
+      {
+        "ext": "scw",
+        "name": "StoryCardWriter Document",
+        "description": "StoryCardWriter文書",
+        "role": "Editor"
+      }
+    ],
     "mac": {
       "category": "public.app-category.productivity",
       "icon": "build/SCWicon.icns",
