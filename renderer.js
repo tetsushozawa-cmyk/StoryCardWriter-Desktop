@@ -100,6 +100,7 @@ function renderCards() {
     actions.append(
       createButton('削除', 'delete-button', () => deleteCard(card.id)),
       createButton('後に追加', 'insert-button', () => startInsertAfter(card.id)),
+      createButton('カードをコピー', 'copy-button', () => copyCard(card.id)),
       createButton('編集', 'edit-button', () => startEdit(card.id)),
     );
     top.append(label, actions);
@@ -291,6 +292,15 @@ function startInsertAfter(cardId) {
   elements.cardBody.value = '';
   renderEditorMode();
   focusEditor();
+}
+
+function copyCard(cardId) {
+  const copy = cardEditor.duplicate(story, cardId, codec.createCard);
+  if (!copy) return;
+
+  setDirty(true);
+  renderCards();
+  showToast('カードをコピーしました');
 }
 
 function deleteCard(cardId) {

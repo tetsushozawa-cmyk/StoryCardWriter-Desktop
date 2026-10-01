@@ -104,3 +104,33 @@ test('空白入力中に過去カードの編集を始めてもカードは増�
   assert.deepEqual(result, { committed: false, action: 'empty' });
   assert.equal(story.cards.length, 1);
 });
+
+test('カードを同じ種類と本文で直後に複製する', () => {
+  const story = codec.newDocument();
+  const source = codec.createCard('action', '1行目\n2行目');
+  const last = codec.createCard('sound', '最後');
+  story.cards.push(source, last);
+
+  const copy = cardEditor.duplicate(story, source.id, codec.createCard);
+
+  assert.equal(story.cards.length, 3);
+  assert.equal(story.cards[1], copy);
+  assert.equal(copy.type, source.type);
+  assert.equal(copy.body, source.body);
+  assert.notEqual(copy.id, source.id);
+});
+
+test('複製したカードはコピー元と独立して編集・削除できる', () => {
+  const story = codec.newDocument();
+  const source = codec.createCard('inner', 'コピー元');
+  story.cards.push(source);
+  const copy = cardEditor.duplicate(story, source.id, codec.createCard);
+
+  copy.type = 'protagonist';
+  copy.body = '複製側だけ変更';
+  story.cards = story.cards.filter((card) => card.id !== copy.id);
+
+  assert.deepEqual(story.cards, [source]);
+  assert.equal(source.type, 'inner');
+  assert.equal(source.body, 'コピー元');
+});

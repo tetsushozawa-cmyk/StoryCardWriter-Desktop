@@ -30,7 +30,17 @@
     return { committed: true, action: 'added' };
   }
 
-  const cardEditor = Object.freeze({ commit, commitPendingCard });
+  function duplicate(story, cardId, createCard) {
+    const index = story.cards.findIndex((item) => item.id === cardId);
+    if (index < 0) return null;
+
+    const source = story.cards[index];
+    const copy = createCard(source.type, source.body);
+    story.cards.splice(index + 1, 0, copy);
+    return copy;
+  }
+
+  const cardEditor = Object.freeze({ commit, commitPendingCard, duplicate });
   globalObject.StoryCardEditor = cardEditor;
   if (typeof module !== 'undefined' && module.exports) module.exports = cardEditor;
 })(typeof globalThis !== 'undefined' ? globalThis : window);
