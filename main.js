@@ -17,6 +17,28 @@ app.on('open-file', (event, filePath) => {
   if (app.isReady() && (!mainWindow || mainWindow.isDestroyed())) createWindow();
 });
 
+function queueWindowsOpenFiles(argv, workingDirectory) {
+  const argumentStart = app.isPackaged ? 1 : 2;
+  for (const argument of argv.slice(argumentStart)) {
+    if (argument.startsWith('-') || path.extname(argument).toLowerCase() !== '.scw') continue;
+    pendingOpenFiles.push(path.resolve(workingDirectory, argument));
+  }
+  flushPendingOpenFiles();
+}
+
+const isPrimaryInstance = process.platform !== 'win32' || app.requestSingleInstanceLock();
+if (process.platform === 'win32') {
+  if (!isPrimaryInstance) {
+    app.quit();
+  } else {
+    app.on('second-instance', (_event, argv, workingDirectory) => {
+      queueWindowsOpenFiles(argv, workingDirectory);
+      if (app.isReady() && (!mainWindow || mainWindow.isDestroyed())) createWindow();
+    });
+    queueWindowsOpenFiles(process.argv, process.cwd());
+  }
+}
+
 function sendCommand(command) {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   mainWindow.webContents.send('app:command', command);
@@ -252,7 +274,7 @@ ipcMain.on('app:dirty-state', (_event, dirty) => {
   rendererIsDirty = Boolean(dirty);
 });
 
-app.whenReady().then(() => {
+if (isPrimaryInstance) app.whenReady().then(() => {
   createApplicationMenu();
   createWindow();
   app.on('activate', () => {
